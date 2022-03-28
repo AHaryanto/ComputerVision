@@ -4,5 +4,7 @@ test_code/
 _screenshots/
 __pycache__/
 
+# Data
 *.avi
 *.mp4
+media/
