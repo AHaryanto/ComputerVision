@@ -15,12 +15,12 @@ class TrafficCounter(object):
                  video_out='',
                  numCnts=10,
                  out_video_params={},
-                 starting_frame=10,):
+                 starting_frame=0,):
         # stores the click coordinates where to crop the frame
         self.crop_rect = []
         # stores the click coordinates of the mask to apply to cropped frame
         self.mask_points = []
-        self.font = cv2.FONT_HERSHEY_SIMPLEX
+        self.font = cv2.FONT_HERSHEY_DUPLEX
         self.p1_count_line = None
         self.p2_count_line = None
         self.counter = 0
@@ -30,8 +30,8 @@ class TrafficCounter(object):
         self.numCnts = numCnts
         self.starting_frame = starting_frame
         self.video_source = cv2.VideoCapture(video_source)
-        self.screenshot_folder = '_screenshots'
-        self.video_out_folder = '_videos'
+        self.screenshot_folder = 'screenshots'
+        self.video_out_folder = 'videos'
 
         self._vid_width = video_width
         self._vid_height = None  # PLACEHOLDER
@@ -58,39 +58,50 @@ class TrafficCounter(object):
     def _set_video_writers(self):
         fps = self.video_source.get(cv2.CAP_PROP_FPS)
         video_ext = self.out_video_params.get('extension', 'avi')
-        string_fourcc = self.out_video_params.get('codec', 'mjpg')
-        fourcc = cv2.VideoWriter_fourcc(*string_fourcc)
+        # string_fourcc = self.out_video_params.get('codec', 'mjpg')
+        fourcc = cv2.VideoWriter_fourcc('M', 'J', 'P', 'G')
         video_res = (self._vid_width, self._vid_height)
         collage_res = (self.collage_width, self.collage_height)
 
         # print(f"Video Writer Params:\nFPS -> {fps}\nFOURCC ->
         # {fourcc}\nVideo res -> {video_res}")
 
+        folder_path = os.path.join(os.getcwd(), self.video_out_folder)
+
+        bg_subtracted_path = os.path.join(
+            folder_path,
+            self._out_vid_base_name + '_bg_subtracted_0' + '.' + video_ext)
         self.out_bg_subtracted = cv2.VideoWriter(
-            os.path.join(
-                self.video_out_folder,
-                self._out_vid_base_name + '_bg_subtracted' + '.' + video_ext),
-            fourcc, fps, video_res)
+            bg_subtracted_path, fourcc, fps, video_res)
+        # print(f'bg_subtracted saved to {bg_subtracted_path}')
+
+        threshold_path = os.path.join(
+            folder_path,
+            self._out_vid_base_name + '_threshold_0' + '.' + video_ext)
         self.out_threshold = cv2.VideoWriter(
-            os.path.join(
-                self.video_out_folder,
-                self._out_vid_base_name + '_threshold' + '.' + video_ext),
-            fourcc, fps, video_res)
+            threshold_path, fourcc, fps, video_res)
+        # print(f'threshold saved to {threshold_path}')
+
+        bg_average_path = os.path.join(
+            folder_path,
+            self._out_vid_base_name + '_bg_average_0' + '.' + video_ext)
         self.out_bg_average = cv2.VideoWriter(
-            os.path.join(
-                self.video_out_folder,
-                self._out_vid_base_name + '_bg_average' + '.' + video_ext),
-            fourcc, fps, video_res)
+            bg_average_path, fourcc, fps, video_res)
+        # print(f'bg_average saved to {bg_average_path}')
+
+        bounding_boxes_path = os.path.join(
+            folder_path,
+            self._out_vid_base_name + '_bounding_boxes_0' + '.' + video_ext)
         self.out_bounding_boxes = cv2.VideoWriter(
-            os.path.join(
-                self.video_out_folder,
-                self._out_vid_base_name + '_bounding_boxes' + '.' + video_ext),
-            fourcc, fps, video_res)
+            bounding_boxes_path, fourcc, fps, video_res)
+        # print(f'bounding_boxes saved to {bounding_boxes_path}')
+
+        collage_path = os.path.join(
+            folder_path,
+            self._out_vid_base_name + '_collage_0' + '.' + video_ext)
         self.out_collage = cv2.VideoWriter(
-            os.path.join(
-                self.video_out_folder,
-                self._out_vid_base_name + '_collage' + '.' + video_ext),
-            fourcc, fps, collage_res)
+            collage_path, fourcc, fps, collage_res)
+        # print(f'collage saved to {collage_path}')
 
     def _release_video_writers(self):
         self.out_bg_subtracted.release()
@@ -363,8 +374,14 @@ class TrafficCounter(object):
             # cv2.putText(img, f"Total cars: {self.counter}",
             #             (15, self._vid_height-15),
             #             self.font, 1, (0, 0, 0), 7)
-            cv2.putText(img, f"Total cars: {self.counter}", (
-                15, self._vid_height-15), self.font, 1, (255, 255, 255), 3)
+            cv2.putText(
+                img=img,
+                text=f"Number of vehicles: {self.counter}",
+                org=(15, 40),
+                fontFace=self.font,
+                fontScale=1,
+                color=(1, 86, 248),
+                thickness=3)
             cv2.imshow('Motion Detection', img)
 
             self.make_collage_of_four(
@@ -412,3 +429,23 @@ class TrafficCounter(object):
         if self.video_out:
             self._release_video_writers()
         cv2.destroyAllWindows()
+
+
+if __name__ == '__main__':
+    video_source = 'media/highway_traffic_28s.mov'
+
+    tc = TrafficCounter(
+        video_source=video_source,
+        line_direction='H',
+        line_position=0.75,
+        video_width=1280,
+        min_area=50,
+        # video_out='traffic_counter_output',
+        # numCnts=10,
+        # out_video_params={
+        #     'codec': 'mjpg',
+        #     'extension': 'avi',
+        # },
+        starting_frame=0)
+
+    tc.main_loop()
