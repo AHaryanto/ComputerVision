@@ -31,7 +31,7 @@ class TrafficCounter(object):
         self.starting_frame = starting_frame
         self.video_source = cv2.VideoCapture(video_source)
         self.screenshot_folder = 'screenshots'
-        self.video_out_folder = 'videos'
+        self.video_out_folder = 'media'
 
         self._vid_width = video_width
         self._vid_height = None  # PLACEHOLDER
@@ -440,12 +440,12 @@ if __name__ == '__main__':
         line_position=0.75,
         video_width=1280,
         min_area=50,
-        # video_out='traffic_counter_output',
+        video_out='traffic_counter_output',
         # numCnts=10,
-        # out_video_params={
-        #     'codec': 'mjpg',
-        #     'extension': 'avi',
-        # },
+        out_video_params={
+            'codec': 'mjpg',
+            'extension': 'avi',
+        },
         starting_frame=0)
 
     tc.main_loop()
